@@ -14,15 +14,17 @@ function monthArray() {
 }
 //массив с timestamp`ами храним в глобальной переменной
 $monArr = monthArray();
-
+//id искомого поля "Дата"
+$idOfField = '71237';
 //callback функция для array_walk_recursive. Параметры - значение и ключ.
-//Функция определяет, является ли значение из custom_fields датой. Если - да,
-//то она сравнивается с ключами-timestamp`ами из глобальной переменной $monArr  и в 
+//Функция ищет $key ,который равен 'value' - именно здесь хранится дата. Если 
+//находит то $value сравнивается с ключами-timestamp`ами из глобальной 
+//переменной $monArr  и в 
 //случае равенства увеличивает ззначение этого элемента массива на 1
-function isDate($value, $key){
+function dateHandler($value, $key){
     global $monArr;
-    $date = strtotime($value);
-    if($date){
+    if($key === 'value'){
+        $date = strtotime($value);
         foreach ($monArr as $key => $item) {
             if ($key === $date){
                 $item++;
@@ -44,7 +46,7 @@ function prepareArrForCalendar($array1) {
 //Функция ,которая ищет сделки по заданному статусу и вызывает все 
 //вспомогательные функции. Возвращает массив, в котором ключи - порядкоые 
 //номера дней, начиная с текущего, а значения - кол-во сделок, у которых 
-//в custom_fields упоминается эта дата
+//в custom_fields есть поле "Дата", в котором упоминается эта дата
 function searchLeadsByDateAndStatus($status = null) {
     Introvert\Configuration::getDefaultConfiguration()->setApiKey('key', 'a68eb01d5aa7d40ae45af4825d8d713a');
     $api = new Introvert\ApiClient();
@@ -54,17 +56,18 @@ function searchLeadsByDateAndStatus($status = null) {
     } catch (Exception $e) {
         echo 'Не удалось получить данные: ', $e->getMessage(), PHP_EOL;
     }
-    
-    $result = $api->lead->getAll(null, $status);
 
-    global $monArr;
+
+    global $monArr, $idOfField;
     //перебираем все сделки, у которых доп.поля(custom_fields)
-    //не пустые и отправляет массив со значениями этих полей в функцию isDate
+    //не пустые и, если там есть поле и искомым id === $idOfField, отправляет 
+    //его как массив  в функцию dateHandler
     
     foreach ($result['result'] as $key=>$value) {
         if (count($value['custom_fields']) === 0)  continue;
-        array_walk_recursive($value['custom_fields'], 'isDate');
-
+        if ($value['custom_fields'][0]['id'] === $idOfField ){
+            array_walk_recursive($value['custom_fields'][0], 'dateHandler');
+        };
     }
     return prepareArrForCalendar($monArr);
 }

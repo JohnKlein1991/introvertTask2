@@ -1,6 +1,8 @@
 var N = 5;
 var array;
 var currentDate = new Date();
+//кол-во мс в одних сутках
+var msInDay = 86400000;
 
 //функия,которая принимет массив , который придет из main.php и значение n - 
 //максимальное кол-во упоминаний этой даты в сделках. Создает новый массив
@@ -27,14 +29,19 @@ var calendar = function(){
         maxDate: '+30',
         minDate: '+1',
         showOtherMonths: true,
-        selectOtherMonths: true,            
+        selectOtherMonths: true, 
         defaultDate: currentDate,
         //данный метод проходит по всем дням, которые будут отображать в нашем
         // календаре и возвращет массив [true] - если день можно будет выбрать
         // или [false] - если нет
         beforeShowDay: function(date){
             if (date > currentDate){
-                var elem = array.shift();
+                //считаем , какая разница между теккущим днем и днем из 
+                //параметра date (в мс), делим это на кол-во мс в сутках и 
+                //отбрасываем дробную часть. Это значение и будет нашим ключом 
+                //для массива дней
+                let i = Math.floor((date - currentDate)/msInDay);
+                var elem = array[i];
                 if(elem === 1){
                     return [true];
                 }
